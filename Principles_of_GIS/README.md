@@ -1,0 +1,1 @@
+Principles of GIS was the first course in the GIS certificate. It consisted of tests, discussions, an annotated bibliography, and 9 total labs. Any labs not included here had files too large to upload, or didn't include a map as a deliverable. 
