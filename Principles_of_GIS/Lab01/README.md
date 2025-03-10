@@ -1,1 +1,1 @@
-
+Lab 01 was to help students practic using the ArcGIS Pro interface and to introduce the essential skills for mapping GIS data. This included: symbolizing layers, creating labels, creating multiple map frames in one layout, and adding other appropriate cartographic elements (north arrow, scale bar, legend, etc) in the layout. 
