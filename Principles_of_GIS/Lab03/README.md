@@ -1,4 +1,5 @@
 ## Learning Objectives 
+(as noted in the lab instructions)
 Explore the available spatial and attribute data from US Census Bureau 
 - Download and import US Census Bureau Tiger Shapefile into geodatabase  
 - Download and import American Community Survey information into ArcGIS 
