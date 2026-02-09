@@ -1,0 +1,48 @@
+#Program: Finds suitable areas away from roads or rivers (or whatever inputted
+    #line or point features), but within the study area. Allows users to use
+    #any dataset.
+#Author: Ashley Meredith
+#Date created: 11/5/2025
+#Last modified: 11/6/2025
+
+#Imports the arcpy module, the operating system module, and the sys module.
+import arcpy, os, sys
+
+#Allows the output results to be overwritten.
+arcpy.env.overwriteOutput = True
+
+#Gets the user inputs as script arguments (or the script tool parameters).
+
+#This variable is set for a polygon feature layer of the area we want to look at.
+studyArea = r"C:\GeoprocessingPython\Practice7\Practice7\Data\MarionCounty.gdb\StudyArea"
+#This variable is defined as those features we want to avoid (line or point).
+avoidFeatures = r"C:\GeoprocessingPython\Practice7\Practice7\Data\MarionCounty.gdb\Rivers"
+#This variable will be the linear distance from the point or line feature to buffer.
+awayDistance = "300 feet" 
+#This variable is set for the path name of a workspace and will be the output location
+    #for the erase tool.
+outWorkspace = r"C:\GeoprocessingPython\Practice7\Practice7\Data\MarionCounty.gdb"
+#This variable is set for a string and will be used as the output feature class.
+outName = "SuitableAreas_Final"
+
+
+#Creates the buffer around the features to avoid.
+bufferOutput = os.path.join(outWorkspace, "avoid_buffer")
+outFeature = os.path.join(outWorkspace, outName)
+
+print("Starting buffer...")
+
+arcpy.analysis.Buffer(avoidFeatures,bufferOutput, awayDistance, dissolve_option="ALL")
+print("Buffer done, starting erase...")
+
+##arcpy.AddMessage(f"Buffer around features created: {bufferOutput}")
+
+#Erase buffered areas from the study area
+arcpy.analysis.Erase(studyArea, bufferOutput, outFeature)
+print("Erase complete:", outFeature)
+##arcpy.AddMessage(f"Suitable area created: {outFeature}")
+
+
+
+#Adds a message to the geoprocessing history.
+arcpy.AddMessage("All Done!")
