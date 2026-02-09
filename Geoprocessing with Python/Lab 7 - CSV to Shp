@@ -1,0 +1,78 @@
+#Program: Use data from a csv file to create a shapefile with point geometry,
+#with 3 additional fields
+#Author: Ashley Meredith
+#Date created: 11/23/2025
+
+#import modules and allow output overwrite
+import arcpy, os, csv
+arcpy.env.overwriteOutput = True
+
+#Add parameters and allow for user input
+outShape = arcpy.GetParameterAsText(0)
+inText = arcpy.GetParameterAsText(1)
+coordsys = arcpy.GetParameter(2)
+
+#set the workspace and the featClass variable
+arcpy.env.workspace = os.path.dirname(outShape)
+featClass = os.path.basename(outShape)
+
+#no longer needed in script for arcGIS use
+#if arcpy.Exists(outShape):
+#    arcpy.Delete_management(outShape)
+
+#create a new fc (point geometry)in the current workspace
+arcpy.CreateFeatureclass_management(
+   arcpy.env.workspace, featClass, "POINT")
+#define the projection for this fc with the inputted coordinate system
+arcpy.DefineProjection_management(featClass, coordsys)
+
+#add the fields in the provided list
+add_fields = ["OFFENSE", "METHOD", "DISTRICT"]
+#specify the fields as text with a field length of 50
+for field in add_fields:
+    arcpy.AddField_management(
+        featClass, field, "TEXT", field_length = 50
+    )
+#open the csv file to read through the indexed fields    
+with open(inText, "r") as f:
+#creates a reader object that can iterate over each row of the file
+    reader = csv.reader(f)
+#read the first row of the csv to get the column names
+    header = next(reader)
+
+#find the position of each column in the header
+    lat_idx = header.index("LATITUDE")
+    lon_idx = header.index("LONGITUDE")
+    offense_idx = header.index("OFFENSE")
+    method_idx = header.index("METHOD")
+    district_idx = header.index("DISTRICT")
+#create an insert cursor for the shapefile
+    with arcpy.da.InsertCursor(featClass, ["SHAPE@", "OFFENSE", "METHOD", "DISTRICT"]) as cursor:
+#initialize a counting variable
+        pid = 0
+#loop through each row to convert the lat/long to floats,
+#skipping any coordinates equal to 0   
+        for row in reader:
+            pid += 1
+
+            lat = float(row[lat_idx])
+            lon = float(row[lon_idx])
+
+            if lat == 0 or lon == 0:
+                continue
+#create a point object from the lon/lat
+            point = arcpy.Point(lon, lat)
+
+#inserts a row into the shapefile, matching the field order in the insert cursor
+            cursor.insertRow((
+                point,
+                row[offense_idx],
+                row[method_idx],
+                row[district_idx]
+            ))
+#print a message to show output file location            
+arcpy.AddMessage(f"File saved to: {outShape}")
+            
+                               
+
+    
