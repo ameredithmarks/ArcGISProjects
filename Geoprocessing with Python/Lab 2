@@ -1,0 +1,42 @@
+#Program: Select a random number between 0 and 6,
+    #and print a message corresponding to that index value in a list.
+#Author: Ashley Meredith
+#Date created: 11/1/2025
+#Last modified: 11/1/2025
+
+
+#Import the random module so we can select a random number.
+import random
+
+
+#List the days of the week in order.
+days = ["Sunday", "Monday", "Tuesday",
+        "Wednesday", "Thursday", "Friday", "Saturday"]
+
+
+#Assign the output file name and location.
+outputFile = "C:\\GeoprocessingPython\\Practice6\\testdata\\results.txt"
+
+#Open the file for writing.
+fileWrite = open(outputFile, 'w')
+
+#Select a random number between 0 and 6.
+number = random.randint(0,6)
+
+#Write the selected random number and related string to the file.
+fileWrite.write(f"The random number is {number}.\n")
+
+#Print the same number and related string to the shell.
+print(f"The random number is {number}.")
+
+#Loop through the days from index 0 up to the random number, printing
+    #the corresponding resulting text to the shell and to the text file.
+for i in range(number +1):
+        text = ((days[i]) * (i + 1))
+        text = text.strip()
+        print(text)
+        fileWrite.write(text + "\n")
+
+#Close the outputfile.
+fileWrite.close()
+
