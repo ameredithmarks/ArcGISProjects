@@ -1,0 +1,90 @@
+#Program: Query a dataset to find states within Mississippi
+#   River watershed and states with large populations.
+#Author: Ashley Meredith
+#Date created: 11/16/2025
+
+#import relevant modules
+import arcpy
+
+#set workspace, allow for overwriting
+arcpy.env.workspace = r"C:\GeoprocessingPython\Practice10\Practice10\Data"
+arcpy.env.overwriteOutput = True
+
+#Assign variables with feature classes and initialize variables with feature
+#layer names
+river_feat = "rivers.shp"
+state_feat = "States.shp"
+river_layer = "rivers"
+st_layer = "States"
+
+#Initialize two variables for the output feature class and output table
+out_feat = "SelectState.shp"
+out_table = "Mississippi.shp"
+
+#check existence of river_layer and delete if necessary
+if arcpy.Exists(river_layer):
+    arcpy.Delete_management(river_layer)
+
+#Selects features where system=Mississippi in the rivers shapefile
+query = "SYSTEM = 'Mississippi'"
+arcpy.MakeFeatureLayer_management(river_feat, river_layer, query)
+result = arcpy.GetCount_management(river_layer)
+#print("There are {0} Mississippi River tributary rivers".format(result))
+
+#Checks existence of st_layer, deletes if necessary
+if arcpy.Exists(st_layer):
+    arcpy.Delete_management(st_layer)
+#creates a feature layer (st_layer) in memory so we can use it in the next
+#block of code
+arcpy.MakeFeatureLayer_management(state_feat, st_layer)
+
+#selects those features in the state layer that intersect with the
+#selected river layer
+arcpy.SelectLayerByLocation_management(
+    in_layer = st_layer,
+    overlap_type = "INTERSECT",
+    select_features = river_layer,
+    selection_type = "NEW_SELECTION"
+)
+
+#Counts and prints the number of states in the river system
+state_count = arcpy.GetCount_management(st_layer)
+print("There are {0} states in the Mississippi River system".format(state_count))
+
+#Copies those states into an output shapefile (out_feat)
+arcpy.CopyFeatures_management(st_layer, out_feat)
+
+#Prints the file name of the output of states in the Mississippi River watershed
+print("Output saved to:", out_feat)
+
+#Selects those states in our temporary st_layer from above, where the
+#population is greater than 10million.
+arcpy.SelectLayerByAttribute_management(
+    in_layer_or_view = st_layer,
+    selection_type = "SUBSET_SELECTION",
+    where_clause = "POP2008 > 10000000"
+)
+
+#Counts and prints the number of states with a large population
+result = arcpy.GetCount_management(st_layer)
+print("There are {0} states in the Mississippi River system with 2008 population greater than 10,000,000".format(result))
+print("Those states are:")
+
+#iterates over selected features in the layer, printing them row by row
+with arcpy.da.SearchCursor(st_layer, ['STATE_NAME']) as cursor:
+    for row in cursor:
+        print(" -", row[0])
+
+#Copies features to the out_table.
+arcpy.CopyFeatures_management(st_layer, out_table)
+#print("Created feature class:", out_table)
+
+#Exports attribute table of the feature layer to a standalone table and
+#prints the file name.
+out_table = "MissPop.dbf"
+arcpy.TableToTable_conversion(st_layer, arcpy.env.workspace, out_table)
+print("Attributes of the feature layer States are copied to the table:", out_table)
+
+#Free up computer memory and avoid data locks by deleting in-memory feature layers
+arcpy.Delete_management(st_layer)
+arcpy.Delete_management(river_layer)
