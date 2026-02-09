@@ -1,0 +1,23 @@
+#Program: Create a grade calculator for the mean grade of three quizzes
+#Author: Ashley Meredith Marks
+#Creation Date: October 23rd, 2025
+#Last modified: October 23rd, 2025
+
+#User inputs their name
+Name = input("Name: ")
+
+#User inputs their grades for each of the three quizzes
+quiz1 = int(input("Enter your grade for Quiz 1: "))
+quiz2 = int(input("Enter your grade for Quiz 2: "))
+quiz3 = int(input("Enter your grade for Quiz 3: "))
+
+#Sums the quiz grades
+quizsum = quiz1 + quiz2 + quiz3
+
+#Calculate the average of the three grades, rounding to 2 decimal places
+average = round((quizsum / 3), 2)
+    
+
+#Print out the message to inform the student of their quiz average
+print(Name, "has a quiz average of:", average)
+
