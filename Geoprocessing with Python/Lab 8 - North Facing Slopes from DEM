@@ -1,0 +1,49 @@
+#Program: Input an elevation DEM, get the aspect, and reclassify values to find
+#north-facing slopes only.
+#Author: Ashley Meredith
+#Date Created: 11/23/2025
+
+
+#Import modules
+import arcpy
+from arcpy.sa import *
+
+#check out the spatial extension
+arcpy.CheckOutExtension("Spatial")
+
+#set the workspace and allow for overwrite of outputs
+arcpy.env.workspace = r"C:\GeoprocessingPython\Lab8\lab08\Data"
+arcpy.env.overwriteOutput = True
+
+#set parameters and allow for user input
+inElevation = arcpy.GetParameterAsText(0)
+outRaster = arcpy.GetParameterAsText(1)
+
+#check if outRaster already exists, and if so, delete it
+if arcpy.Exists(outRaster):
+    arcpy.Delete_management(outRaster)
+    
+#Create aspect raster from the input elevation data
+outAspect = Aspect(inElevation)
+
+#Save the output aspect as a temporary raster in memory
+temp_raster = r"in_memory\north_aspect"
+outAspect.save(temp_raster)
+
+#set remapping range for north-facing slopes to 1 and all others to NODATA
+remap = RemapRange([[0,22.5, 1], [22.5,337.5,"NODATA"], [337.5,360, 1]])
+#conduct the reclassification based on the in_memory aspect layer and the
+#remapping ranges, using the missing values parameter to make sure those
+#are classified as NODATA
+north = Reclassify(temp_raster, "Value", remap, "NODATA")
+
+#save the results in a permanent raster file as described above
+north.save(outRaster)
+
+#display a message with the path for the permanent output raster file
+arcpy.AddMessage(f"Permanent raster saved to: {outRaster}")
+
+#check in the spatial extension
+arcpy.CheckInExtension("Spatial")
+
+
