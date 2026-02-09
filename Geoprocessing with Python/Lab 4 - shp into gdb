@@ -1,0 +1,59 @@
+#Program: Convert shapefiles into geodatabases. All must have the same coordinate system
+    #as the template layer, and the new file name must show whether the data hs been re-projected.
+#Author: Ashley Meredith
+#Date created: 11/8/2025
+#Last modified: 11/9/2025
+
+#Import arcpy and os modules.
+import arcpy, os
+
+#Initialize variables with hardcoded values and allow results to be overwritten. Set workspace.
+arcpy.env.workspace = arcpy.GetParameterAsText(0)
+outputWS = arcpy.GetParameterAsText(1)
+outTemplate = arcpy.GetParameterAsText(2)
+arcpy.env.overwriteOutput = True
+arcpy.AddMessage(outTemplate)
+
+#Get spatial reference info from the template
+templateCS = arcpy.Describe(outTemplate).spatialReference
+templateName = arcpy.Describe(outTemplate).name
+arcpy.AddMessage(f"Template layer: {templateName}")
+arcpy.AddMessage(f"Template coordinate system: {templateCS.name}")
+
+#List shapefiles
+shapefiles = arcpy.ListFeatureClasses("*.shp")
+
+arcpy.AddMessage(shapefiles)
+
+#Find shapefiles
+for shp in shapefiles:
+    #Get the full path of each shapefile, describe its coordiante system.
+    shp_path = os.path.join(arcpy.env.workspace, shp)
+    shp_desc = arcpy.Describe(shp_path)
+    shpCS = shp_desc.spatialReference
+
+    #Remove extension and create output name in an intermediate file
+    base_name = os.path.splitext(shp)[0]
+    
+    #Compare coordinate systems
+    #If the coordinate systems are the same, copy the base name to the GDB.
+    if shpCS.name == templateCS.name:
+        outFC = os.path.join(outputWS, base_name)
+        arcpy.management.CopyFeatures(shp_path, outFC)
+        #Verification message with CS details.
+        arcpy.AddMessage(f" '{base_name}' copied to geodatabase." f"Coordinate system: {shpCS.name}")
+        
+    #If the CS are not the same, add the _prj suffix, project it to the matching
+        #CS before copying it to the GDB.
+    else:
+        outFC = os.path.join(outputWS, f"{base_name}_prj")
+        arcpy.management.Project(shp_path, outFC, templateCS)
+        #Verification message with Old and New CS details.
+        arcpy.AddMessage(f" '{base_name}' reprojected and saved as '{base_name}_prj'.\n"
+              f"    Original: {shpCS.name}\n"
+              f"    New: {templateCS.name}")
+
+#Ending congratulatory message!
+arcpy.AddMessage("All shapefiles processed successfully.")
+        
+                                    
