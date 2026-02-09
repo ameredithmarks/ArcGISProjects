@@ -1,0 +1,68 @@
+#Program: Classify MO counties by 2000 population into Low/Medium/High.
+#Add the classification as a field and populate the field with results.
+#Author: Ashley Meredith
+#Date Created: 11/16/2025
+
+
+#import necessary modules
+import arcpy
+
+#set workspace and allow output overwrites
+arcpy.env.workspace = arcpy.GetParameterAsText(0)
+arcpy.overwriteOutput = True
+
+#Assign/initialize variables with input from the user
+MOcnty_feat = arcpy.GetParameterAsText(1)
+pop_field = arcpy.GetParameterAsText(2)
+class_field = arcpy.GetParameterAsText(3)
+name_field = arcpy.GetParameterAsText(4)
+
+#Validate that the chosen class field is correct in arcGIS. Print the name.
+class_field = arcpy.ValidateFieldName(class_field, arcpy.env.workspace)
+print(class_field)
+
+#Look for the class_field name in the attribute fields. If it exists, delete it. 
+fields = [f.name for f in arcpy.ListFields(MOcnty_feat)]
+if class_field in fields:
+    print("Field {0} already exists. Deleting now.".format(class_field))
+    arcpy.DeleteField_management(MOcnty_feat, class_field)
+
+#Add class_field as a field to the shapefile, set it to TEXT with a field length of ten.
+#Pring resulting confirmation message. 
+arcpy.AddField_management(MOcnty_feat, class_field, "TEXT", field_length =10)
+print("Field {0} has been added as TEXT with length 10.".format(class_field))
+
+#Use the cursor to iterate through each row and add a value to the class_field based on
+#the classification scheme. 
+with arcpy.da.UpdateCursor(MOcnty_feat, [pop_field, class_field, name_field]) as cursor:
+    for row in cursor:
+        pop_2000 = row[0]
+        if pop_2000 <10000:
+            row[1] = "LOW"
+        elif pop_2000 >100000:
+            row[1] = "HIGH"
+        else:
+            row[1] = "MEDIUM"
+#update the row and print the results for each county.
+        cursor.updateRow(row)
+        print("{} county has a population of {} as {}".format(row[2], pop_2000, row[1]))
+
+#make an in-memory feature layer for the next step
+temp_layer = "MOcnty_lyr"
+arcpy.MakeFeatureLayer_management(MOcnty_feat, temp_layer)
+
+#Count the total counties in the layer.
+total_counties = int(arcpy.GetCount_management(temp_layer)[0])
+
+#iterate through each classification, selecting those records that match the classification
+#print a message with the count of each.
+for cls in ["LOW", "MEDIUM", "HIGH"]:
+    query = "{} = '{}'".format(class_field, cls)
+    arcpy.SelectLayerByAttribute_management(temp_layer, "NEW_SELECTION", query)
+    count = int(arcpy.GetCount_management(temp_layer)[0])
+    print("{} out of {} counties are classified as {}".format(count,total_counties, cls))
+
+#Delete any temporary layers.    
+arcpy.Delete_management(temp_layer)
+        
+
